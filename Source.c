@@ -2,10 +2,21 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define RIAD_ZAM 6											 // poèet riadkov na jedneho zamestnanca
+#define RIAD_ZAM 6		// poèet riadkov na jedneho zamestnanca
 
-FILE *vypis(FILE *fptr, int *v, int *poc_riad) {			// funkcia "v"
+typedef struct polozka {										//Definovanie struktury.
+	char name[52];											//Prvky struktury.
+	char SPZ[52];
+	int type;
+	long int price;
+	long int date;	
+	struct polozka *next;
+} polozka;
+
+FILE *vypis(FILE *fptr, int *v, int *poc_riad, polozka **beg) {			// funkcia "v"
 	char ch;
+	char riadok[55];
+	polozka *act=NULL,*pom=NULL;
 	if (*v == 0) {											// zistuje ci bol subor uz otvoreny
 		fptr = fopen("predaj.txt", "r");					// ak nie otvory subor
 	}
@@ -26,21 +37,34 @@ FILE *vypis(FILE *fptr, int *v, int *poc_riad) {			// funkcia "v"
 			}
 		}												
 		rewind(fptr);
+		for (int i = 1; i <= (*poc_riad) / 6; i++) {
+			pom = (polozka*)malloc(sizeof(polozka));
+			if (i == 1) {
+				(*beg) = pom;
+				act = (*beg);
+			}
+			else {
+				act->next = pom;
+				act = act->next;
+				act->next = NULL;
+			}
+		}
+		act = (*beg);
 		for (int i = 1; i < *poc_riad; i++) {				//Vypis suboru na obrazovku
 			if (i % 6 == 1) printf("Meno a priezvysko: ");
 			if (i % 6 == 2) printf("SPZ: ");
 			if (i % 6 == 3) printf("Typ auta: ");
 			if (i % 6 == 4) printf("Cena: ");
 			if (i % 6 == 5) printf("Datum: ");
-			while (!feof(fptr))
-			{
-				ch = fgetc(fptr);
-				printf("%c", ch);
-				if (ch == '\n')
-				{
-					break;
-				}
-			}
+			fgets(riadok, 52, fptr);
+			printf("%s", riadok);
+			riadok[strlen(riadok) - 1] = '\0';
+			if (i % 6 == 1) strcpy(act->name, riadok);
+			if (i % 6 == 2) strcpy(act->SPZ, riadok);
+			if (i % 6 == 3) act->type = atoi(riadok);
+			if (i % 6 == 4) act->price = atof(riadok);
+			if (i % 6 == 5) act->date = atol(riadok);
+			if (i % 6 == 0) act = act->next;
 		}
 	}
 	rewind(fptr);											//Vracia fptr na zaciatok suboru
@@ -89,7 +113,7 @@ char * npole(FILE *fptr) {									//Funkcia "n"
 	
 	pocetzam /= RIAD_ZAM;
 	int i, j;
-	char **pompol = malloc(pocetzam * sizeof(char*));		//Alokacia dynamickeho pola rozmer Y
+	char **pompol = (char**)malloc(pocetzam * sizeof(char*));		//Alokacia dynamickeho pola rozmer Y
 	for (i = 0; i < pocetzam; i++)							//Alokacia dynamickeho pola rozmer X
 		pompol[i] = (char*)malloc(10 * sizeof(char));
 
@@ -143,11 +167,11 @@ void palindrom(char **spztky, int pocetzam)					//Funkcia "p"
 }
 
 void najpredaj(char **spztky, int pocetzam) {				//Funkcia "z" - BONUS
-	char **pole = malloc(pocetzam * sizeof(char *)), pom[3]; //Vytvorenie dynam. pola pre rozmer Y
+	char **pole = (char**)malloc(pocetzam * sizeof(char *)), pom[3]; //Vytvorenie dynam. pola pre rozmer Y
 	for (int i = 0; i < pocetzam; i++)						// Vytvorenie dynam. pola pre rozmer X
 		pole[i] = (char*)malloc(3 * sizeof(char));
 
-	int *pocetpol = malloc(pocetzam * sizeof(int)),bolean=1,riadok=0;	//Vytvorenie pola s poctom SPZ daneho okresu
+	int *pocetpol = (int*)malloc(pocetzam * sizeof(int)),bolean=1,riadok=0;	//Vytvorenie pola s poctom SPZ daneho okresu
 
 	for (int j = 0; j < pocetzam; j++) {					//Prechod cez pole so SZP
 		bolean = 1;											//bolean - TRUE/FALSE - ci sa uz nachadza v poli s znackami okresu
@@ -198,12 +222,13 @@ void main()
 	int v = 0, *poc_riad;
 	char znak, **spztky = NULL;
 	FILE *subor = NULL;
+	polozka *beg=NULL;
 	poc_riad = (int*)malloc(sizeof(int));
 	*poc_riad = 0;
 	do {
 		scanf("%c", &znak);											//Nacitanie ovladacieho znaku
 		switch (znak) {
-		case 'v': subor = vypis(subor, &v, poc_riad);
+		case 'v': subor = vypis(subor, &v, poc_riad,&beg);
 			break;
 		case 'o': if (v == 1) odmeny(subor);
 			break;
