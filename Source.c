@@ -71,84 +71,20 @@ FILE *vypis(FILE *fptr, int *v, int *poc_riad, polozka **beg) {			// funkcia "v"
 	return(fptr);											//Funkcia vracia smernik na subor
 }
 
-void odmeny(FILE *fptr) {									//Funkcia "o"
-	int datum, pom, TYP;	
-	scanf("%d", &datum);									//Nacitanie datumu 'RRRRMMDD'
-	char MENO[55], SPZ[8], CENA[10], znak;;
-	long int DATUM;
-	float odmena;
-
-	while (!feof(fptr)) {									//Postupne nacitanie udajov
-		if (fgets(MENO, 53, fptr) == NULL) break;
-		MENO[strlen(MENO) - 1] = '\0';						//Nahradenie znaku'\n' znakom konca retazca
-		fgets(SPZ, 8, fptr);
-		fscanf(fptr, "%d\n", &TYP);
-		fgets(CENA, 10, fptr);
-		CENA[strlen(CENA) - 1] = '\0';
-		fscanf(fptr, "%li", &DATUM);
-		if ((datum - DATUM) >= 10000) {						//Zistenie ci pracuje viac ako rok
-			if (TYP == 1) odmena = atof(CENA)*0.015;
-			if (TYP == 0) odmena = atof(CENA)*0.022;
-			printf("%s %s %.2lf\n", MENO, SPZ, odmena);		//Vypis na obrazovku
-		}
-		fgets(MENO, 50, fptr);								//Nacitanie prazdneho riadku
-		//fgets(MENO, 50, fptr);								
-	}
-	rewind(fptr);
+void odmeny(polozka *beg) {									//Funkcia "o"	
+	long int datum;
+	scanf("%d", &datum);
+	polozka *act;
+	act = beg;
+	do {
+		if (datum - act->date >= 10000)
+			printf("%s %s %.2lf\n", act->name, act->SPZ, (0.022 - (act->type)*0.007)*act->price);
+		act = act->next;
+	} while (act->next != NULL);
 }
 
-char * npole(FILE *fptr) {									//Funkcia "n"
-	
-	int pocetzam = 1;
-	char ch, RIADOK[55], SPZ[8];
-	
-	while (!feof(fptr))										//Pocitanie poctu SPZ
-	{
-		ch = fgetc(fptr);
-		if (ch == '\n')
-		{
-			(pocetzam)++;
-		}
-	}
-	
-	pocetzam /= RIAD_ZAM;
-	int i, j;
-	char **pompol = (char**)malloc(pocetzam * sizeof(char*));		//Alokacia dynamickeho pola rozmer Y
-	for (i = 0; i < pocetzam; i++)							//Alokacia dynamickeho pola rozmer X
-		pompol[i] = (char*)malloc(10 * sizeof(char));
+void vypispol(polozka *beg) {				
 
-	j = 0;
-	rewind(fptr);
-	while (!feof(fptr)) {									//Nacitavanie SPZ
-		i = 0;
-		if (fgets(RIADOK, 55, fptr) == NULL) break;
-		ch = fgetc(fptr);
-		while (ch != '\n') {								//Prepis SPZ do pola
-			pompol[j][i] = ch;
-			ch = fgetc(fptr);
-			i++;
-		}
-		pompol[j][i] = '\0';
-		fgets(RIADOK, 50, fptr);
-		fgets(RIADOK, 50, fptr);
-		fgets(RIADOK, 50, fptr);
-		fgets(RIADOK, 50, fptr);
-		j++;
-	}
-	rewind(fptr);
-	return(pompol);											//Funkcia vracia ukazovatel na adresu pola s SPZ
-}
-
-void vypispol(char **polspz, int pocetzam) {				//Funkcia "s"
-	pocetzam /= RIAD_ZAM;
-	for (int j = 0; j < pocetzam; j++) {					//Vypis SPZ na obrazovku
-		for (int i = 0; i < 8; i++) {						//Vsunutie medzery po 2. a 5. znaku
-			if (i == 2 || i == 5)
-				printf(" ");
-			printf("%c", polspz[j][i]);
-		}
-		printf("\n");										//Odriadkovanie po vypisanej spz
-	}
 }
 
 void palindrom(char **spztky, int pocetzam)					//Funkcia "p"
@@ -220,7 +156,7 @@ void najpredaj(char **spztky, int pocetzam) {				//Funkcia "z" - BONUS
 void main()
 {
 	int v = 0, *poc_riad;
-	char znak, **spztky = NULL;
+	char znak;
 	FILE *subor = NULL;
 	polozka *beg=NULL;
 	poc_riad = (int*)malloc(sizeof(int));
@@ -230,25 +166,15 @@ void main()
 		switch (znak) {
 		case 'v': subor = vypis(subor, &v, poc_riad,&beg);
 			break;
-		case 'o': if (v == 1) odmeny(subor);
+		case 'o': if (v == 1) odmeny(beg);
 			break;
-		case 'n': {
-			if (v == 1) {
-				if (spztky != NULL)									//Ak je pole uz vytvorene tak ho dealokuje
-					for (int i = 0; i < *poc_riad/RIAD_ZAM; i++)
-						free(spztky[i]);
-				free(spztky);
-				spztky = npole(subor);
-			}
-		}
+		case 's':if (v == 1)
+			vypispol(beg);
 			break;
-		case 's':if (spztky != NULL)
-			vypispol(spztky, *poc_riad);
-			break;
-		case 'p': if (spztky != NULL)
+		case 'p': if (v == 1)
 			palindrom(spztky, *poc_riad);
 			break;
-		case 'z':if (spztky != NULL)
+		case 'z':if (v == 1)
 			najpredaj(spztky,*poc_riad/RIAD_ZAM);
 			break;
 		}
