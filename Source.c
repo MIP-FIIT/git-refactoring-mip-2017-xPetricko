@@ -83,9 +83,20 @@ void odmeny(polozka *beg) {									//Funkcia "o"
 	} while (act->next != NULL);
 }
 
-void vypispol(polozka *beg) {				
-
+void vypispol(polozka *beg) {				//Funkcia "s"
+	polozka *act;
+	act = beg;
+	while (act->next != NULL){
+		for (int i = 0; i < 8; i++) {						//Vsunutie medzery po 2. a 5. znaku
+			if (i == 2 || i == 5)
+				printf(" ");
+			printf("%c",act->SPZ[i]);
+		}
+		printf("\n");
+		act = act->next;
+	} 
 }
+
 
 void palindrom(char **spztky, int pocetzam)					//Funkcia "p"
 {
