@@ -9,14 +9,14 @@ typedef struct polozka {										//Definovanie struktury.
 	char SPZ[52];
 	int type;
 	long int price;
-	long int date;	
+	long int date;
 	struct polozka *next;
 } polozka;
 
 FILE *vypis(FILE *fptr, int *v, int *poc_riad, polozka **beg) {			// funkcia "v"
 	char ch;
 	char riadok[55];
-	polozka *act=NULL,*pom=NULL;
+	polozka *act = NULL, *pom = NULL;
 	if (*v == 0) {											// zistuje ci bol subor uz otvoreny
 		fptr = fopen("predaj.txt", "r");					// ak nie otvory subor
 	}
@@ -35,7 +35,7 @@ FILE *vypis(FILE *fptr, int *v, int *poc_riad, polozka **beg) {			// funkcia "v"
 			{
 				(*poc_riad)++;
 			}
-		}												
+		}
 		rewind(fptr);
 		for (int i = 1; i <= (*poc_riad) / 6; i++) {
 			pom = (polozka*)malloc(sizeof(polozka));
@@ -76,56 +76,59 @@ void odmeny(polozka *beg) {									//Funkcia "o"
 	scanf("%d", &datum);
 	polozka *act;
 	act = beg;
-	do {
+	while (act != NULL) {
 		if (datum - act->date >= 10000)
 			printf("%s %s %.2lf\n", act->name, act->SPZ, (0.022 - (act->type)*0.007)*act->price);
 		act = act->next;
-	} while (act->next != NULL);
+	}
 }
 
 void vypispol(polozka *beg) {				//Funkcia "s"
 	polozka *act;
 	act = beg;
-	while (act->next != NULL){
+	while (act != NULL) {
 		for (int i = 0; i < 8; i++) {						//Vsunutie medzery po 2. a 5. znaku
 			if (i == 2 || i == 5)
 				printf(" ");
-			printf("%c",act->SPZ[i]);
+			printf("%c", act->SPZ[i]);
 		}
 		printf("\n");
 		act = act->next;
-	} 
-}
-
-
-void palindrom(char **spztky, int pocetzam)					//Funkcia "p"
-{
-	pocetzam /= RIAD_ZAM;
-	int i, j, bol;											// bol- TRUE/FALSE palindrom
-	for (j = 0; j < pocetzam; j++) {						//Prechadzanie pola s SPZ
-		bol = 1;											//Predpoklad ze SPZ je palindrom
-		for (i = 0; i < 3; i++)
-			if (spztky[j][i] != spztky[j][6 - i]) {			//Ak neni tak bol=FALSE
-				bol = 0;
-			}
-		if (bol == 1)										//Ak je to palindrom tak ho vypise
-			printf("%c%c\n", spztky[j][0], spztky[j][1]);	
 	}
 }
 
-void najpredaj(char **spztky, int pocetzam) {				//Funkcia "z" - BONUS
+
+void palindrom(polozka *beg)					//Funkcia "p"
+{
+	polozka *act;
+	act = beg;
+	while (act != NULL) {
+		if (act->SPZ[0] == act->SPZ[6])
+			if (act->SPZ[1] == act->SPZ[5])
+				if (act->SPZ[2] == act->SPZ[4])
+					printf("%s\n", act->SPZ);
+		act = act->next;
+	}
+}
+
+void najpredaj(polozka *beg, int pocetzam) {
+	polozka *act,*zac;
 	char **pole = (char**)malloc(pocetzam * sizeof(char *)), pom[3]; //Vytvorenie dynam. pola pre rozmer Y
 	for (int i = 0; i < pocetzam; i++)						// Vytvorenie dynam. pola pre rozmer X
 		pole[i] = (char*)malloc(3 * sizeof(char));
 
-	int *pocetpol = (int*)malloc(pocetzam * sizeof(int)),bolean=1,riadok=0;	//Vytvorenie pola s poctom SPZ daneho okresu
-
+	int *pocetpol = (int*)malloc(pocetzam * sizeof(int)), bolean = 1, riadok = 0;	//Vytvorenie pola s poctom SPZ daneho okresu
+	zac = beg;
 	for (int j = 0; j < pocetzam; j++) {					//Prechod cez pole so SZP
-		bolean = 1;											//bolean - TRUE/FALSE - ci sa uz nachadza v poli s znackami okresu
-		for (int i = 0; i < 2; i++)							//Prepis prvych dvoch znakov SPZ do pomocneho pola
-			pom[i] = spztky[j][i];
+		act = beg;
+		for (int a = 0; a < j; a++)
+			zac = act->next;
+		act = zac;
+		bolean = 1;											//bolean - TRUE/FALSE - ci sa uz nachadza v poli s znackami okresu						//Prepis prvych dvoch znakov SPZ do pomocneho pola
+		pom[0] = act->SPZ[0];
+		pom[1] = act->SPZ[1];
 		pom[2] = '\0';
-		
+
 		for (int i = 0; i <= riadok; i++) {					//Porovnavanie ci sme sa uz stretli s takym okresom
 			if (!strcmp(pom, pole[i])) {					//Ak ano bolean=0 - prvok sa uz opakuje
 				bolean = 0;
@@ -134,20 +137,21 @@ void najpredaj(char **spztky, int pocetzam) {				//Funkcia "z" - BONUS
 		}
 		if (bolean) {										//Ak sa prvok este neopakuje
 			int count = 0;
-			for (int i = 0; i < pocetzam; i++) {			//Pocet rovnakych okresov v poli so SPZ
-					if (spztky[j][0]==spztky[i][0])
-						if (spztky[j][1]==spztky[i][1])
-							count++;
+			for (int i = j; i < pocetzam; i++) {			//Pocet rovnakych okresov v poli so SPZ
+				if (zac->SPZ[0] == act->SPZ[0])
+					if (zac->SPZ[1] == act->SPZ[1])
+						count++;
+				act = act->next;
 			}
 			pocetpol[riadok] = count;						//Ulozenie poctu daneho okresu
 		}
 
 		if (bolean) {										//Ak sa prvok este neopakuje
 			strcpy(pole[riadok], pom);						//Ulozenie znacky daneho okresu
-				riadok++;									//Ukazovatel na dalsie prazdne miesto
+			riadok++;									//Ukazovatel na dalsie prazdne miesto
 		}
 	}
-	int max=0;										
+	int max = 0;
 	for (int i = 0; i < riadok; i++)						//Najdenie maxima
 		if (pocetpol[i] > max)
 			max = pocetpol[i];
@@ -169,13 +173,13 @@ void main()
 	int v = 0, *poc_riad;
 	char znak;
 	FILE *subor = NULL;
-	polozka *beg=NULL;
+	polozka *beg = NULL;
 	poc_riad = (int*)malloc(sizeof(int));
 	*poc_riad = 0;
 	do {
 		scanf("%c", &znak);											//Nacitanie ovladacieho znaku
 		switch (znak) {
-		case 'v': subor = vypis(subor, &v, poc_riad,&beg);
+		case 'v': subor = vypis(subor, &v, poc_riad, &beg);
 			break;
 		case 'o': if (v == 1) odmeny(beg);
 			break;
@@ -183,10 +187,10 @@ void main()
 			vypispol(beg);
 			break;
 		case 'p': if (v == 1)
-			palindrom(spztky, *poc_riad);
+			palindrom(beg);
 			break;
 		case 'z':if (v == 1)
-			najpredaj(spztky,*poc_riad/RIAD_ZAM);
+			najpredaj(beg, *poc_riad / RIAD_ZAM);
 			break;
 		}
 	} while (znak != 'k');											//Pri stlaceni "k" - koniec programu
